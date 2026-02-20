@@ -1,44 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
-	"time"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+
+	"Login/middlewear"
 )
-
-func LoginLogger() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		start := time.Now()
-
-		c.Next()
-
-		duration := time.Since(start)
-
-		fmt.Printf("[Login-Log] %s %s | Status: %d | Duration: %v\n",
-			c.Request.Method,
-			c.Request.URL.Path,
-			c.Writer.Status(),
-			duration,
-		)
-	}
-}
-
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		user := session.Get("user")
-
-		if user == nil {
-			c.Redirect(http.StatusFound, "/")
-			c.Abort()
-			return
-		}
-		c.Next()
-	}
-}
 
 func main() {
 	r := gin.Default()
@@ -55,7 +24,7 @@ func main() {
 	const originalUsername = "nabeel"
 	const originalPassword = "nabeel123"
 
-	r.POST("/login", LoginLogger(), func(c *gin.Context) {
+	r.POST("/login", middlewear.LoginLogger() , func(c *gin.Context) {
 		username := c.PostForm("username")
 		password := c.PostForm("password")
 
@@ -72,7 +41,7 @@ func main() {
 		c.String(http.StatusUnauthorized, "invalid credentials")
 	})
 
-	r.GET("/dashboard", AuthMiddleware(), func(c *gin.Context) {
+	r.GET("/dashboard", middlewear.AuthMiddleware(), func(c *gin.Context) {
 		session := sessions.Default(c)
 		user := session.Get("user")
 
@@ -81,7 +50,7 @@ func main() {
 		})
 	})
 
-	r.GET("/logout", LoginLogger(), func(c *gin.Context) {
+	r.GET("/logout", middlewear.LoginLogger(), func(c *gin.Context) {
 		session := sessions.Default(c)
 
 		session.Clear()
